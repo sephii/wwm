@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width" />
+        <link rel="stylesheet" href="{{ STATIC_URL }}css/libs/normalize.css"/>
+        <link rel="stylesheet" href="{{ STATIC_URL }}css/libs/foundation.min.css"/>
+        <link rel="stylesheet" href="{{ STATIC_URL }}css/wwm.css"/>
+    </head>
+    <body>
+        <div id="container">
+            {% block body %}
+            <div id="create-game-dialog" class="reveal-modal">
+                <form method="post" action="">
+                    <label for="nickname">Your nickname</label>
+                    <input id="nickname" type="text" name="nickname"/>
+                    <label for="game-categories">Questions to include</label>
+                    <select name="categories" id="game-categories" multiple>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="game-max-players">Max players</label>
+                    <input id="game-max-players" type="text" name="maxplayers" value="4"/>
+                    <label for="game-private">Private game</label>
+                    <input id="game-private" type="checkbox" name="is_private"/>
+                    <input type="submit" class="button" value="Create game"/>
+                    </select>
+                </form>
+            </div>
+            <div class="row">
+                <div class="small-12 large-12 columns">
+                    <input class="button" type="submit" id="create-game" value="Create game"/>
+                </div>
+            </div>
+            <div class="row">
+                <div class="small-12 large-12 columns">
+                    <table id="games-list">
+                        <thead>
+                            <tr>
+                                <th>Categories</th>
+                                <th>Players</th>
+                                <th>Join</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% comment %}
+            <div class="row">
+                <div class="twelve columns">
+                    <form id="connect" method="post" action="">
+                        {% csrf_token %}
+                        <input id="nickname" type="text" name="nickname"/>
+                        <input type="submit" class="button"/>
+                    </form>
+                    <ul id="games">
+                    </ul>
+                    <a id="start">Start</a>
+                </div>
+            </div>
+            {% endcomment %}
+            {% endblock %}
+        </div>
+        <script src="{{ STATIC_URL }}js/libs/jquery-1.10.1.min.js"></script>
+        <script src="{{ STATIC_URL }}js/libs/socket.io.js"></script>
+        <script src="{{ STATIC_URL }}js/libs/foundation.min.js"></script>
+        <script src="{{ STATIC_URL }}js/wwm.js"></script>
+    </body>
+</html>

@@ -1,1 +1,2 @@
 *.pyc
+wwm/settings/local.py
