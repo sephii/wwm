@@ -1,3 +1,5 @@
+{% load i18n %}
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -5,31 +7,28 @@
         <link rel="stylesheet" href="{{ STATIC_URL }}css/libs/normalize.css"/>
         <link rel="stylesheet" href="{{ STATIC_URL }}css/libs/foundation.min.css"/>
         <link rel="stylesheet" href="{{ STATIC_URL }}css/wwm.css"/>
+
+        {% block extrahead %}{% endblock %}
     </head>
     <body>
         <div id="container">
             {% block body %}
-            <div id="create-game-dialog" class="reveal-modal">
-                <form method="post" action="">
-                    <label for="nickname">Your nickname</label>
-                    <input id="nickname" type="text" name="nickname"/>
-                    <label for="game-categories">Questions to include</label>
-                    <select name="categories" id="game-categories" multiple>
-                        {% for category in categories %}
-                        <option value="{{ category.id }}">{{ category.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <label for="game-max-players">Max players</label>
-                    <input id="game-max-players" type="text" name="maxplayers" value="4"/>
-                    <label for="game-private">Private game</label>
-                    <input id="game-private" type="checkbox" name="is_private"/>
-                    <input type="submit" class="button" value="Create game"/>
+            <div id="create-game-dialog" class="medium reveal-modal">
+                <h3>{% trans "Create new game" %}</h3>
+                <form method="post" action="{% url 'home' %}" {% if create_game_form.errors %}class="errors"{% endif %}>
+                    {% csrf_token %}
+                    {% include "form.html" with form=create_game_form %}
+                    <div class="row">
+                        <div class="large-12 small-12 columns">
+                            <input type="submit" class="button" value="Create game"/>
+                        </div>
+                    </div>
                     </select>
                 </form>
             </div>
             <div class="row">
                 <div class="small-12 large-12 columns">
-                    <input class="button" type="submit" id="create-game" value="Create game"/>
+                    <a class="button" id="create-game">Create game</a>
                 </div>
             </div>
             <div class="row">

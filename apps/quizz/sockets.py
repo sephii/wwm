@@ -1,11 +1,12 @@
 import logging
 
+from django.contrib.sessions.models import Session
 from socketio.namespace import BaseNamespace
 from socketio.mixins import BroadcastMixin
 from socketio.sdjango import namespace
 
 from .mixins import GameMixin
-from .models import Category, Game, Player
+from .models import Game, Player
 
 
 @namespace('/quizz')
@@ -29,70 +30,100 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
                                     status=Game.STATUS_WAITING)
         return [game.to_dict() for game in games]
 
-    def on_hello(self):
-        self.add_acl_method('on_login')
+    def get_session(self):
+        return Session.objects.get(pk=self.session['id'])
+
+    def get_game(self):
+        return Game.objects.get(pk=self.game.id)
+
+    def send_players_list(self):
+        self.emit_to_players('players_list',
+                             [player.name
+                              for player in self.game.players.all()])
+
+    def on_hello(self, session=None):
+        self.add_acl_method('on_create_game')
+        self.add_acl_method('on_join_game')
+
+        if session is not None:
+            self.session['id'] = session
 
         self.emit('games_list', self.get_games_list())
 
-    def on_login(self, nickname):
-        self.log(nickname)
-        self.nickname = nickname
+    def on_join_game(self):
+        player_id = self.get_session().get_decoded()['player_id']
+        self.player = Player.objects.get(pk=player_id)
+        self.game = self.player.game
 
-        self.player = Player.objects.create(name=nickname)
+        if self.game.status != Game.STATUS_WAITING:
+            return False
 
-        self.add_acl_method('on_join')
-        self.add_acl_method('on_create_game')
-
-        return True
-
-    def on_join(self, game_id):
-        self.log(game_id)
-        self.game = Game.objects.get(pk=game_id)
-
-        self.player.game = self.game
-        self.player.save()
+        self.game.nb_players += 1
+        self.game.save()
 
         self.join(self.game.id)
         self.emit_to_players('player_joined', self.player.name)
-        self.emit('players_list',
-                  [player.name for player in self.game.players.all()])
+        self.send_players_list()
 
-        self.log("player {0} joined game {1}".format(self.player, self.game))
+        if self.game.owner.id == self.player.id:
+            self.add_acl_method('on_start_game')
 
-        return True
-
-    def on_create_game(self, categories, max_players, is_private):
-        self.game = Game.objects.create(max_players=max_players,
-                                        is_private=is_private)
-
-        for category in categories:
-            self.game.categories.add(Category.objects.get(pk=category))
-
-        self.add_acl_method('on_start_game')
-        self.broadcast_event_not_me('games_list', self.get_games_list())
+        self.add_acl_method('on_answer')
 
         return True
 
     def on_start_game(self):
         self.log('starting game')
-        question = self.game.get_question()
-        answers = question.get_random_answers()
-        self.log(answers)
 
-        self.emit_to_players('question', self.player.id, question.question,
-                             answers)
+        self.emit_to_players('game_start')
+        self.game = self.get_game()
+        self.game.status = Game.STATUS_PLAYING
+        self.game.current_question = self.game.get_question()
+        self.game.current_player_id = self.player.id
+        self.game.save()
+
+        answers = self.game.current_question.get_random_answers()
+
+        self.emit_to_players('question', self.game.current_player_id,
+                             self.game.current_question.question, answers,
+                             Game.LEVELS_VALUES[self.game.current_level - 1])
+
+        return True
+
+    def on_answer(self, answer):
+        self.game = self.get_game()
+
+        if self.game.current_player_id != self.player.id:
+            return False
+
+        if answer == self.game.current_question.answer_1:
+            self.emit_to_players('correct_answer', self.player.id)
+        else:
+            self.emit_to_players('wrong_answer', self.player.id)
+
+        next_player = self.game.get_next_player_id()
+        self.log(next_player)
+        self.game.current_player_id = next_player
+        self.game.current_question = self.game.get_question()
+        self.game.save()
+
+        answers = self.game.current_question.get_random_answers()
+
+        self.emit_to_players('question', self.game.current_player_id,
+                             self.game.current_question.question, answers,
+                             Game.LEVELS_VALUES[self.game.current_level - 1])
 
         return True
 
     def recv_disconnect(self):
+        if self.player is not None and self.player.id:
+            self.player.game.nb_players -= 1
+            self.player.game = None
+            self.player.save()
+
         if self.game is not None:
             self.emit_to_players('player_left', self.player.name)
-
-        if self.player is not None and self.player.id:
-            self.player.delete()
-
-            if self.game.players.count() == 0:
-                self.game.delete()
+            self.send_players_list()
 
         self.disconnect(silent=True)
 

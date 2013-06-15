@@ -5,10 +5,15 @@ import socketio.sdjango
 admin.autodiscover()
 socketio.sdjango.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url("^socket\.io", include(socketio.sdjango.urls)),
     url(r'^$', 'apps.quizz.views.home', name='home'),
-    url(r'^game/(?P<id>\d+)/$', 'apps.quizz.views.game', name='game'),
+    url(r'^games/(?P<id>\d+)/$', 'apps.quizz.views.game_detail',
+        name='game_detail'),
+    url(r'^games/(?P<id>\d+)/(?P<secret>[a-z0-9]+)/$',
+        'apps.quizz.views.game_detail',
+        name='game_detail'),
     # url(r'^wwm/', include('wwm.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

@@ -11,13 +11,14 @@ Game = function() {
             socket.disconnect();
         });
 
-        socket.emit('hello');
+        if(window.session !== undefined) {
+            socket.emit('hello', window.session);
+        }
+        else {
+            socket.emit('hello');
+        }
         bindSocketFunctions();
 
-    }
-
-    function setNickname(nickname) {
-        socket.emit('login', nickname);
     }
 
     function bindSocketFunctions() {
@@ -26,10 +27,9 @@ Game = function() {
         });
 
         socket.on('games_list', function (games) {
-            console.log(games);
             $('#games-list tbody').empty();
             for (var i in games) {
-              $('#games-list tbody').append($('<tr><td>' + games[i].categories.join(', ') + '</td><td>' + games[i].nb_players + ' / ' + games[i].max_players + '</td><td><a href="">Join</a></td>'));
+              $('#games-list tbody').append($('<tr><td>' + games[i].categories.join(', ') + '</td><td>' + games[i].nb_players + ' / ' + games[i].max_players + '</td><td><a href="games/' + games[i].id + '/">Join</a></td>'));
             }
 
             $('#games-list tbody a').click(function() {
@@ -57,51 +57,65 @@ Game = function() {
             console.log('player ' + nickname + ' left');
         });
 
-        socket.on('players_list', function(list) {
-            console.log('players list');
-            console.log(list);
+        socket.on('players_list', function(players) {
+            $('#players-list').empty();
+            for (var i in players) {
+              $('#players-list').append($('<li>').text(players[i]));
+            }
         });
 
-        socket.on('question', function(player_id, question, answers) {
-            console.log(player_id, question, answers);
-        });
-    }
+        socket.on('question', function(player_id, question, answers, value) {
+            $('#question').text(question);
 
-    function createGame(nickname, categories, max_players, is_private) {
-        socket.emit('login', nickname);
-        socket.emit('create_game', categories, max_players, is_private);
+            $('#answers').empty();
+            for(var i in answers) {
+                var answer = $('<li>');
+                answer.append($('<a class="button">').html(String.fromCharCode(65 + parseInt(i)) + ': <span class="answer">' + answers[i] + '</span>'));
+                $('#answers').append(answer);
+            }
+
+            $('#answers li a').click(function() {
+                console.log('answering ' + $(this).find('.answer').text());
+                socket.emit('answer', $(this).find('.answer').text());
+            });
+        });
+
+        socket.on('game_start', function() {
+            console.log('game started');
+        });
+
+        socket.on('correct_answer', function() {
+            console.log('YES');
+        });
+
+        socket.on('wrong_answer', function() {
+            console.log('NOES');
+        });
     }
 
     function startGame() {
         socket.emit('start_game');
     }
 
+    function joinGame() {
+        socket.emit('join_game');
+    }
+
     return {
         'connect': connect,
-        'createGame': createGame,
         'startGame': startGame,
-        'setNickname': setNickname
+        'joinGame': joinGame
     }
 }();
 
 $(function() {
     Game.connect();
 
-    $('#connect').submit(function() {
-        Game.setNickname($('#nickname').val());
-
-        return false;
-    });
-
-    /*
-    $('#create-game').click(function() {
-        Game.createGame();
-    });
-    */
-
-    $('#start').click(function() {
+    $('#start-game').click(function() {
         console.log('lets get ready to rumbleeee');
         Game.startGame();
+
+        return false;
     });
 
     $('#create-game').click(function() {
@@ -110,8 +124,25 @@ $(function() {
         });
     });
 
-    $('#create-game-dialog form').submit(function() {
-        Game.createGame($('#nickname').val(), $('#game-categories').val(), $('#game-max-players').val(), $('#game-private').val());
-        return false;
-    });
+    if($('#create-game-dialog form').hasClass('errors')) {
+        $('#create-game-dialog').foundation('reveal', 'open', {
+            animation: ''
+        });
+    }
+
+    if($('#nickname-dialog form').hasClass('errors')) {
+        $('#nickname-dialog').foundation('reveal', 'open', {
+            animation: ''
+        });
+    }
+
+    if(window.session !== undefined && window.session) {
+        Game.joinGame();
+    }
+    else if(window.session == '') {
+        console.log('no session');
+        $('#nickname-dialog').foundation('reveal', 'open', {
+            animation: ''
+        });
+    }
 });

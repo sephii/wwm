@@ -1,0 +1,19 @@
+{% for field in form %}
+    {% if field.is_hidden %}
+        {{ field }}
+    {% else %}
+        <div class="row">
+            <div class="large-12 small-12 columns">
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.errors %}
+                <small class="error">
+                    {% for error in field.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endfor %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+<script type="text/javascript">
+    window.session = '{{ request.session.session_key|default:'' }}';
+</script>
+{% endblock %}
+
+{% block body %}
+    <div id="nickname-dialog" class="medium reveal-modal">
+        <h3>{% trans "Choose your nickname" %}</h3>
+        <form method="post" action="{% url 'game_detail' game.id %}" {% if nickname_form.errors %}class="errors"{% endif %}>
+            {% csrf_token %}
+            {% include "form.html" with form=nickname_form %}
+            <div class="row">
+                <div class="large-12 small-12 columns">
+                    <input type="submit" class="button" value="Join game"/>
+                </div>
+            </div>
+            </select>
+        </form>
+    </div>
+
+    {% if player and game.owner_id == player.id %}
+    <a id="start-game" href="" class="button">Start game</a>
+    {% endif %}
+
+    <div class="row">
+        <div class="large-12 small-12 columns question-container">
+            <div class="panel" id="question"></div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="large-12 small-12 columns">
+            <ol class="large-block-grid-2 small-block-grid-1" id="answers"></ol>
+        </div>
+    </div>
+
+    <ul id="players-list">
+    {% for player in game.players.all %}
+        <li>{{ player.name }}</li>
+    {% endfor %}
+    </ul>
+{% endblock %}
