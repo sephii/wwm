@@ -113,7 +113,13 @@ Game = function() {
     function showQuestion(player, question) {
         $('#current-money').text(question.value);
         $('#question').text(question.question);
-        $('#current-player-container').text(player.name);
+
+        if(player.id == window.player_id) {
+            $('#current-player').text('you').addClass('you');
+        }
+        else {
+            $('#current-player').text(player.name).removeClass('you');
+        }
 
         $('#answers').empty();
         for(var i in question.answers) {

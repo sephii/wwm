@@ -41,3 +41,7 @@ a.answer.disabled, a.answer.disabled:hover, a.answer.disabled:focus {
     text-align: right;
     margin-bottom: 10px;
 }
+
+#current-player.you {
+    font-weight: bold;
+}
