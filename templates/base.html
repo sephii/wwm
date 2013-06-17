@@ -36,6 +36,8 @@
                     <table id="games-list">
                         <thead>
                             <tr>
+                                <th>Creator</th>
+                                <th>Level</th>
                                 <th>Categories</th>
                                 <th>Players</th>
                                 <th>Join</th>
@@ -66,5 +68,6 @@
         <script src="{{ STATIC_URL }}js/libs/socket.io.js"></script>
         <script src="{{ STATIC_URL }}js/libs/foundation.min.js"></script>
         <script src="{{ STATIC_URL }}js/wwm.js"></script>
+        {% block extrajs %}{% endblock %}
     </body>
 </html>

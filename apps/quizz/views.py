@@ -1,7 +1,7 @@
 import random
 
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.http import Http404
 from django.template import RequestContext
 from django.shortcuts import get_object_or_404, render_to_response, redirect
 from .forms import CreateGameForm, CreateGameFormWithNickname, NicknameForm
@@ -73,7 +73,7 @@ def game_detail(request, id, secret=None):
     player = None
 
     if game.is_private and secret != game.secret_id:
-        raise Http404
+        raise PermissionDenied
 
     if request.method == "POST":
         nickname_form = NicknameForm(request.POST)
@@ -93,6 +93,12 @@ def game_detail(request, id, secret=None):
     else:
         if 'player_id' in request.session:
             player = Player.objects.get(pk=request.session['player_id'])
+
+        if (game.status != Game.STATUS_WAITING and (player is None or
+                player.game_id != game.id)):
+            raise PermissionDenied
+
+        if player is not None:
             player.game = game
             player.save()
 

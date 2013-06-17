@@ -90,6 +90,8 @@ class Game(models.Model):
             'status': self.status,
             'nb_players': self.nb_players,
             'max_players': self.max_players,
+            'creator': self.owner.name,
+            'money': self.LEVELS_VALUES[self.current_level - 1],
         }
 
     def get_question(self):
@@ -102,7 +104,8 @@ class Game(models.Model):
 
     def get_next_player_id(self):
         players_list = [player.id for player in self.players.all()]
-        random.shuffle(players_list, self.get_rand_seed)
+        random.seed(self.get_rand_seed())
+        random.shuffle(players_list)
         logger.info('players list is %s', players_list)
 
         iterator = itertools.cycle(players_list)
@@ -112,23 +115,42 @@ class Game(models.Model):
                 self.current_player_id)
             )
 
+            first_player = iterator.next()
+
             iterator = itertools.dropwhile(
                 lambda x: x != self.current_player_id, iterator
             )
 
             # skip the current player
             current_player = iterator.next()
-            logger.info('current player iterator is {0}'.format(current_player))
+            logger.info('current player iterator is {0}'.format(
+                current_player
+            ))
 
-        next_player = iterator.next()
+            next_player = iterator.next()
+
+            # We cycled through all the players, pass to the next level
+            if next_player == first_player:
+                self.current_level += 1
+                self.save()
+        else:
+            next_player = iterator.next()
+
         logger.info('next player is {0}'.format(next_player))
 
-        # We cycled through all the players, pass to the next level
-        if next_player == self.owner_id:
-            self.current_level += 1
-            self.save()
-
         return next_player
+
+    def get_random_answers(self):
+        if self.current_question is None:
+            raise IndexError('There\'s no current question on the game')
+
+        question = self.current_question
+        answers = [question.answer_1, question.answer_2, question.answer_3,
+                   question.answer_4]
+        random.seed(self.get_rand_seed())
+        random.shuffle(answers)
+
+        return answers
 
     def get_rand_seed(self):
         return float('0.' + str(self.created_at.microsecond))

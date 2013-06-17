@@ -1,6 +1,5 @@
 import gevent
 import logging
-import time
 
 from django.contrib.sessions.models import Session
 from socketio.namespace import BaseNamespace
@@ -25,11 +24,10 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
         self.log("Socketio session started")
 
     def log(self, message):
-        self.logger.error("[{0}] {1}".format(self.socket.sessid, message))
+        self.logger.info("[{0}] {1}".format(self.socket.sessid, message))
 
     def get_games_list(self):
-        games = Game.objects.filter(is_private=False,
-                                    status=Game.STATUS_WAITING)
+        games = Game.objects.filter(is_private=False)
         return [game.to_dict() for game in games]
 
     def get_session(self):
@@ -54,25 +52,37 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
 
         self.emit('games_list', self.get_games_list())
 
+    def on_create_game(self):
+        self.broadcast_event_not_me('games_list', self.get_games_list())
+
     def on_join_game(self):
         player_id = self.get_session().get_decoded()['player_id']
         self.player = Player.objects.get(pk=player_id)
         self.game = self.player.game
-
-        if self.game.status != Game.STATUS_WAITING:
-            return False
 
         self.game.nb_players += 1
         self.game.save()
 
         self.join(self.game.id)
         self.emit_to_players('player_joined', self.player.name)
+        self.broadcast_event_not_me('games_list', self.get_games_list())
         self.send_players_list()
 
         if self.game.owner.id == self.player.id:
             self.add_acl_method('on_start_game')
 
         self.add_acl_method('on_answer')
+
+        if self.game.status == Game.STATUS_PLAYING:
+            self.emit('question', {
+                'id': self.game.current_player_id,
+                'name': self.game.current_player.name,
+            }, {
+                'question': self.game.current_question.question,
+                'answers': self.game.get_random_answers(),
+                'value': Game.LEVELS_VALUES[self.game.current_level - 1],
+                'level': self.game.current_level
+            })
 
         return True
 
@@ -95,7 +105,7 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
             'name': self.game.current_player.name,
         }, {
             'question': self.game.current_question.question,
-            'answers': answers,
+            'answers': self.game.get_random_answers(),
             'value': Game.LEVELS_VALUES[self.game.current_level - 1],
             'level': self.game.current_level
         })
@@ -129,11 +139,17 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
 
         gevent.sleep(5)
 
+        current_level = self.game.current_level
         next_player = Player.objects.get(pk=self.game.get_next_player_id())
         self.log(next_player)
         self.game.current_player = next_player
         self.game.current_question = self.game.get_question()
         self.game.save()
+
+        # We went to the next level, let the others know
+        if self.game.current_level > current_level:
+            self.log('sending games list due to new level')
+            self.broadcast_event_not_me('games_list', self.get_games_list())
 
         answers = self.game.current_question.get_random_answers()
 
@@ -142,7 +158,7 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
             'name': self.game.current_player.name,
         }, {
             'question': self.game.current_question.question,
-            'answers': answers,
+            'answers': self.game.get_random_answers(),
             'value': Game.LEVELS_VALUES[self.game.current_level - 1],
             'level': self.game.current_level
         })
@@ -150,8 +166,11 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
         return True
 
     def recv_disconnect(self):
+        self.log('received disconnect')
         if self.player is not None and self.player.id:
+            self.log('from ' + self.player.name)
             self.player.game.nb_players -= 1
+            self.player.game.save()
             self.player.game = None
             self.player.save()
 

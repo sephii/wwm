@@ -32,7 +32,12 @@ Game = function() {
         socket.on('games_list', function (games) {
             $('#games-list tbody').empty();
             for (var i in games) {
-              $('#games-list tbody').append($('<tr><td>' + games[i].categories.join(', ') + '</td><td>' + games[i].nb_players + ' / ' + games[i].max_players + '</td><td><a href="games/' + games[i].id + '/">Join</a></td>'));
+                // TODO XSS
+                $('#games-list tbody').append($(
+                    '<tr><td>' + games[i].creator + '</td><td>' + games[i].money +
+                    '</td><td>' + games[i].categories.join(', ') + '</td><td>' +
+                    games[i].nb_players + ' / ' + games[i].max_players +
+                    '</td><td>' + (games[i].status == 1 ? ('<a href="games/' + games[i].id + '/">Join</a>') : '') + '</td>'));
             }
 
             $('#games-list tbody a').click(function() {
@@ -160,10 +165,16 @@ Game = function() {
         socket.emit('join_game');
     }
 
+    function announceGame() {
+        console.log('announce game');
+        socket.emit('create_game');
+    }
+
     return {
         'connect': connect,
         'startGame': startGame,
-        'joinGame': joinGame
+        'joinGame': joinGame,
+        'announceGame': announceGame
     }
 }();
 
