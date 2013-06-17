@@ -29,11 +29,18 @@ Une prison
 Un bateau
 
 1
-Le maître d'armes d'Arya Stark s'appelle Syrio ...
+Le maître d'armes d'Arya Stark s'appelle Syrio...
 Forel
 Fodel
 Fossel
 Mopatis
+
+2
+Le heaume forgé par Gendry a une forme de...
+Taureau
+Chien
+Lion
+Dragon
 
 2
 Le loup-garou de Robb s'appelle...
@@ -63,9 +70,52 @@ Lysa Arryn
 Lyanna Stark
 Cersei Lannister
 
+2
+L'arme fétiche de Robert Baratheon est...
+Le marteau de guerre
+L'épée
+La lance
+Le fléau de guerre
+
+2
+La devise des Lannister est...
+Je rugis
+Un Lannister paie toujours ses dettes
+Insoumis, invaincus, intacts
+Famille, devoir, honneur
+
+3
+Jon Arryn est le sire...
+Des Eyrié
+Des Terres de l'Orage
+De Port-Réal
+Du Conflans
+
+3
+La rébellion de Robert est la conséquence de...
+L'enlèvement de Lyanna Stark
+Le désir de pouvoir de Robert Baratheon
+La mort de l'héritier de Jon Arryn
+???
+
 4
 Qui a commandité l'assassinat de Bran ?
 Joffrey Baratheon
 Jaime Lannister
 Cersei Lannister
 Robert Baratheon
+
+4
+Robert Baratheon a vaincu Rhaegar Targaryen...
+Au Trident
+A Port-Réal
+Sur la baie de la Néra
+A l'Œildieu
+
+# Épisode 4
+4
+Le blason de la maison Arryn représente un faucon devant...
+Une lune
+Un arbre
+Une truite
+Un éclair

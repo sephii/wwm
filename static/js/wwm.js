@@ -11,8 +11,11 @@ Game = function() {
             socket.disconnect();
         });
 
-        if(window.session !== undefined) {
-            socket.emit('hello', window.session);
+        console.log('hello');
+        if(window.session !== undefined && window.session) {
+            socket.emit('hello', window.session, function() {
+                joinGame();
+            });
         }
         else {
             socket.emit('hello');
@@ -64,19 +67,20 @@ Game = function() {
             }
         });
 
-        socket.on('question', function(player_id, question, answers, value) {
-            $('#question').text(question);
+        socket.on('question', function(player, question) {
+            console.log('received question ' + question.question);
+            $('#waiting-screen').hide();
+            $('#game-board').show();
+            showQuestion(player, question);
+        });
 
-            $('#answers').empty();
-            for(var i in answers) {
-                var answer = $('<li>');
-                answer.append($('<a class="button">').html(String.fromCharCode(65 + parseInt(i)) + ': <span class="answer">' + answers[i] + '</span>'));
-                $('#answers').append(answer);
-            }
-
-            $('#answers li a').click(function() {
-                console.log('answering ' + $(this).find('.answer').text());
-                socket.emit('answer', $(this).find('.answer').text());
+        socket.on('answered', function(answer) {
+            console.log('the other player answered ' + answer);
+            $('#answers li a').each(function() {
+                if($(this).find('.answer').text() == answer) {
+                    $(this).addClass('answer');
+                    return true;
+                }
             });
         });
 
@@ -85,19 +89,68 @@ Game = function() {
         });
 
         socket.on('correct_answer', function() {
-            console.log('YES');
+            console.log('correct!');
+            console.log('adding success class');
+            $('#answers li a.answer').removeClass('answer').addClass('success');
         });
 
-        socket.on('wrong_answer', function() {
-            console.log('NOES');
+        socket.on('wrong_answer', function(correct_answer) {
+        console.log('wrong answer, correct is ' + correct_answer);
+            console.log('adding alert class');
+            $('#answers li a.answer').removeClass('answer').addClass('alert');
+
+            setTimeout(function() {
+                $('#answers li a').each(function() {
+                    if($(this).find('.answer').text() == correct_answer) {
+                        $(this).addClass('success');
+                        return true;
+                    }
+                });
+            }, 2000);
         });
+    }
+
+    function showQuestion(player, question) {
+        $('#current-money').text(question.value);
+        $('#question').text(question.question);
+        $('#current-player-container').text(player.name);
+
+        $('#answers').empty();
+        for(var i in question.answers) {
+            var answer = $('<li>');
+            answer.append($('<a class="button disabled">').html(String.fromCharCode(65 + parseInt(i)) + ': <span class="answer">' + question.answers[i] + '</span>'));
+            $('#answers').append(answer);
+        }
+
+        console.log('question is for ' + player.id + ', current is ' + window.player_id);
+        if(player.id == window.player_id) {
+            $('#answers li a').each(function() {
+                $(this).removeClass('disabled');
+            });
+
+            $('#answers li a').click(function() {
+                var answer = $(this).find('.answer').text();
+                $(this).addClass('answer');
+
+                $('#answers li a').each(function() {
+                    $(this).addClass('disabled');
+                });
+
+                console.log('answering ' + answer);
+                socket.emit('answer', answer);
+            });
+        }
     }
 
     function startGame() {
+        console.log('start game');
         socket.emit('start_game');
+
+        $('#start-game').prop('disabled', true);
     }
 
     function joinGame() {
+        console.log('join game');
         socket.emit('join_game');
     }
 
@@ -136,9 +189,6 @@ $(function() {
         });
     }
 
-    if(window.session !== undefined && window.session) {
-        Game.joinGame();
-    }
     else if(window.session == '') {
         console.log('no session');
         $('#nickname-dialog').foundation('reveal', 'open', {

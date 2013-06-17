@@ -1,4 +1,6 @@
+import gevent
 import logging
+import time
 
 from django.contrib.sessions.models import Session
 from socketio.namespace import BaseNamespace
@@ -44,6 +46,8 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
     def on_hello(self, session=None):
         self.add_acl_method('on_create_game')
         self.add_acl_method('on_join_game')
+        # Not sure why but we need to repeat this
+        self.add_acl_method('recv_disconnect')
 
         if session is not None:
             self.session['id'] = session
@@ -79,14 +83,22 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
         self.game = self.get_game()
         self.game.status = Game.STATUS_PLAYING
         self.game.current_question = self.game.get_question()
-        self.game.current_player_id = self.player.id
+        self.game.current_player = Player.objects.get(
+            pk=self.game.get_next_player_id()
+        )
         self.game.save()
 
         answers = self.game.current_question.get_random_answers()
 
-        self.emit_to_players('question', self.game.current_player_id,
-                             self.game.current_question.question, answers,
-                             Game.LEVELS_VALUES[self.game.current_level - 1])
+        self.emit_to_players('question', {
+            'id': self.game.current_player_id,
+            'name': self.game.current_player.name,
+        }, {
+            'question': self.game.current_question.question,
+            'answers': answers,
+            'value': Game.LEVELS_VALUES[self.game.current_level - 1],
+            'level': self.game.current_level
+        })
 
         return True
 
@@ -96,22 +108,44 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
         if self.game.current_player_id != self.player.id:
             return False
 
-        if answer == self.game.current_question.answer_1:
-            self.emit_to_players('correct_answer', self.player.id)
-        else:
-            self.emit_to_players('wrong_answer', self.player.id)
+        self.emit_to_players_not_me('answered', answer)
 
-        next_player = self.game.get_next_player_id()
+        waiting_time = self.game.get_waiting_time()
+        self.log('waiting {0}'.format(waiting_time))
+        gevent.sleep(waiting_time)
+
+        if self.game.is_answer_correct(answer):
+            self.log('send correct')
+            self.emit_to_players('correct_answer')
+        else:
+            self.log('send wrong')
+            self.log(type(answer))
+            self.log('answered "{0}", correct was "{1}"'.format(
+                answer.encode('utf-8'),
+                self.game.current_question.answer_1.encode('utf-8')
+            ))
+            self.emit_to_players('wrong_answer',
+                                 self.game.current_question.answer_1)
+
+        gevent.sleep(5)
+
+        next_player = Player.objects.get(pk=self.game.get_next_player_id())
         self.log(next_player)
-        self.game.current_player_id = next_player
+        self.game.current_player = next_player
         self.game.current_question = self.game.get_question()
         self.game.save()
 
         answers = self.game.current_question.get_random_answers()
 
-        self.emit_to_players('question', self.game.current_player_id,
-                             self.game.current_question.question, answers,
-                             Game.LEVELS_VALUES[self.game.current_level - 1])
+        self.emit_to_players('question', {
+            'id': self.game.current_player_id,
+            'name': self.game.current_player.name,
+        }, {
+            'question': self.game.current_question.question,
+            'answers': answers,
+            'value': Game.LEVELS_VALUES[self.game.current_level - 1],
+            'level': self.game.current_level
+        })
 
         return True
 

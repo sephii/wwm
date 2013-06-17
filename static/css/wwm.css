@@ -18,3 +18,26 @@ div.question-container {
     margin-bottom: 0;
     text-align: left;
 }
+
+a.answer {
+    background-color: #aaaa00;
+    border-color: #888800;
+}
+
+a.answer:hover {
+    background-color: #888800;
+}
+
+a.answer.disabled, a.answer.disabled:hover, a.answer.disabled:focus {
+    background-color: #cccc11;
+    border-color: #888800;
+}
+
+#game-board {
+    display: none;
+}
+
+#current-money-container {
+    text-align: right;
+    margin-bottom: 10px;
+}

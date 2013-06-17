@@ -1,7 +1,11 @@
 import itertools
+import logging
 import random
 import uuid
 from django.db import models
+
+
+logger = logging.getLogger('models')
 
 
 class Category(models.Model):
@@ -99,14 +103,27 @@ class Game(models.Model):
     def get_next_player_id(self):
         players_list = [player.id for player in self.players.all()]
         random.shuffle(players_list, self.get_rand_seed)
+        logger.info('players list is %s', players_list)
 
         iterator = itertools.cycle(players_list)
-        iterator = itertools.dropwhile(lambda x: x != self.current_player.id,
-                                       iterator)
-        # skip the current player
-        iterator.next()
-        next_player = iterator.next()
 
+        if self.current_player is not None:
+            logger.info('current player is not none, its {0}'.format(
+                self.current_player_id)
+            )
+
+            iterator = itertools.dropwhile(
+                lambda x: x != self.current_player_id, iterator
+            )
+
+            # skip the current player
+            current_player = iterator.next()
+            logger.info('current player iterator is {0}'.format(current_player))
+
+        next_player = iterator.next()
+        logger.info('next player is {0}'.format(next_player))
+
+        # We cycled through all the players, pass to the next level
         if next_player == self.owner_id:
             self.current_level += 1
             self.save()
@@ -119,11 +136,17 @@ class Game(models.Model):
     def get_current_difficulty(self):
         return self.current_level / 5 + 1
 
+    def get_waiting_time(self):
+        return ((float(self.current_level) / len(self.LEVELS_VALUES))
+                * random.randint(3, 6))
+
+    def is_answer_correct(self, answer):
+        return self.current_question.answer_1 == answer
+
 
 class Player(models.Model):
     name = models.CharField(max_length=20)
     game = models.ForeignKey(Game, related_name='players', null=True)
-    #is_admin = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.name

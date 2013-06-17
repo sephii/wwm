@@ -23,3 +23,16 @@ class GameMixin(object):
                 continue
             if socket.session['game'] == self.session['game']:
                 socket.send_packet(pkt)
+
+    def emit_to_players_not_me(self, event, *args):
+        """This is sent to all in the room (in this particular Namespace)"""
+        pkt = dict(type="event",
+                   name=event,
+                   args=args,
+                   endpoint=self.ns_name)
+        for sessid, socket in self.socket.server.sockets.iteritems():
+            if 'game' not in socket.session:
+                continue
+            if (socket.session['game'] == self.session['game']
+                    and socket != self.socket):
+                socket.send_packet(pkt)

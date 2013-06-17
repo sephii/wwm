@@ -4,6 +4,9 @@
 {% block extrahead %}
 <script type="text/javascript">
     window.session = '{{ request.session.session_key|default:'' }}';
+    {% if player %}
+    window.player_id = '{{ player.id }}';
+    {% endif %}
 </script>
 {% endblock %}
 
@@ -22,24 +25,36 @@
         </form>
     </div>
 
-    {% if player and game.owner_id == player.id %}
-    <a id="start-game" href="" class="button">Start game</a>
-    {% endif %}
-
-    <div class="row">
-        <div class="large-12 small-12 columns question-container">
-            <div class="panel" id="question"></div>
+    <div id="game-board">
+        <div class="row">
+            <div class="large-6 small-6 columns" id="current-player-container">
+            </div>
+            <div class="large-6 small-6 columns" id="current-money-container">
+                <img src="{{ STATIC_URL }}images/gold.png"/>
+                <span id="current-money">100</span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="large-12 small-12 columns question-container">
+                <div class="panel" id="question"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="large-12 small-12 columns">
+                <ol class="large-block-grid-2 small-block-grid-1" id="answers"></ol>
+            </div>
         </div>
     </div>
-    <div class="row">
-        <div class="large-12 small-12 columns">
-            <ol class="large-block-grid-2 small-block-grid-1" id="answers"></ol>
-        </div>
-    </div>
 
-    <ul id="players-list">
-    {% for player in game.players.all %}
-        <li>{{ player.name }}</li>
-    {% endfor %}
-    </ul>
+    <div id="waiting-screen">
+        {% if player and game.owner_id == player.id %}
+        <a id="start-game" href="" class="button">Start game</a>
+        {% endif %}
+
+        <ul id="players-list">
+        {% for player in game.players.all %}
+            <li>{{ player.name }}</li>
+        {% endfor %}
+        </ul>
+    </div>
 {% endblock %}
