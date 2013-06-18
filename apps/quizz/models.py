@@ -1,7 +1,7 @@
 import itertools
 import logging
 import random
-import uuid
+
 from django.db import models
 
 
@@ -31,18 +31,6 @@ class Question(models.Model):
     def __unicode__(self):
         return self.question
 
-    def get_random_answers(self):
-        answers = getattr(self, '_answers', None)
-
-        if answers is None:
-            answers = [self.answer_1, self.answer_2, self.answer_3,
-                       self.answer_4]
-            random.shuffle(answers)
-
-            setattr(self, '_answers', answers)
-
-        return answers
-
 
 class Game(models.Model):
     STATUS_WAITING = 1
@@ -56,8 +44,7 @@ class Game(models.Model):
     LEVELS_VALUES = [100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000,
                      64000, 125000, 250000, 500000, 1000000]
 
-    is_private = models.BooleanField(default=False)
-    secret_id = models.CharField(max_length=12, blank=True)
+    password = models.CharField(blank=True, max_length=128)
     status = models.PositiveSmallIntegerField(choices=STATUS_CHOICES,
                                               default=STATUS_WAITING)
     categories = models.ManyToManyField(Category, related_name='games')
@@ -75,12 +62,6 @@ class Game(models.Model):
 
     def __unicode__(self):
         return str(self.id)
-
-    def save(self, *args, **kwargs):
-        if not self.secret_id:
-            self.secret_id = str(uuid.uuid4())[-12:]
-
-        super(Game, self).save(*args, **kwargs)
 
     def to_dict(self):
         return {

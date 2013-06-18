@@ -12,7 +12,7 @@
 
 {% block body %}
     <div id="nickname-dialog" class="medium reveal-modal">
-        <h3>{% trans "Choose your nickname" %}</h3>
+        <h3>{% trans "Game information" %}</h3>
         <form method="post" action="{% url 'game_detail' game.id %}" {% if nickname_form.errors %}class="errors"{% endif %}>
             {% csrf_token %}
             {% include "form.html" with form=nickname_form %}

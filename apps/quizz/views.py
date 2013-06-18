@@ -1,10 +1,14 @@
 import random
 
+from django.contrib.auth.hashers import make_password
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.template import RequestContext
 from django.shortcuts import get_object_or_404, render_to_response, redirect
-from .forms import CreateGameForm, CreateGameFormWithNickname, NicknameForm
+from .forms import (
+    CreateGameForm, CreateGameFormWithNickname, NicknameForm,
+    PasswordNicknameForm
+)
 from .models import Game, Category, Player
 from .sockets import QuizzNamespace
 
@@ -42,9 +46,15 @@ def home(request):
 
             game = Game.objects.create(
                 max_players=game_form.cleaned_data['max_players'],
-                is_private=game_form.cleaned_data['is_private'],
                 owner=player,
             )
+
+            if game_form.cleaned_data['password']:
+                game.password = make_password(
+                    game_form.cleaned_data['password']
+                )
+                game.save()
+
             for category in game_form.cleaned_data['categories']:
                 game.categories.add(category)
 
@@ -52,8 +62,6 @@ def home(request):
             player.save()
 
             url_parameters = {'id': game.id}
-            if game.is_private:
-                url_parameters['secret'] = game.secret_id
 
             return redirect(reverse('game_detail', kwargs=url_parameters))
     else:
@@ -68,15 +76,17 @@ def home(request):
     }, RequestContext(request))
 
 
-def game_detail(request, id, secret=None):
+def game_detail(request, id):
     game = get_object_or_404(Game, pk=id)
     player = None
 
-    if game.is_private and secret != game.secret_id:
-        raise PermissionDenied
+    form_class = NicknameForm if not game.password else PasswordNicknameForm
 
     if request.method == "POST":
-        nickname_form = NicknameForm(request.POST)
+        nickname_form = form_class(request.POST)
+
+        if game.password:
+            nickname_form.game_password = game.password
 
         if nickname_form.is_valid():
             player = Player.objects.create(
@@ -86,8 +96,6 @@ def game_detail(request, id, secret=None):
             request.session['player_id'] = player.id
 
             url_parameters = {'id': game.id}
-            if game.is_private:
-                url_parameters['secret'] = game.secret_id
 
             return redirect(reverse('game_detail', kwargs=url_parameters))
     else:
@@ -102,7 +110,7 @@ def game_detail(request, id, secret=None):
             player.game = game
             player.save()
 
-        nickname_form = NicknameForm(initial={
+        nickname_form = form_class(initial={
             'nickname': random.choice(RANDOM_NAMES),
         })
 

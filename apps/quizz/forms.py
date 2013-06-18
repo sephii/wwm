@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.hashers import check_password
 from .models import Category
 
 
@@ -7,7 +8,7 @@ class CreateGameForm(forms.Form):
         queryset=Category.objects.all()
     )
     max_players = forms.IntegerField(max_value=10, min_value=1, initial=4)
-    is_private = forms.BooleanField(required=False)
+    password = forms.CharField(required=False)
 
 
 class CreateGameFormWithNickname(CreateGameForm):
@@ -16,8 +17,24 @@ class CreateGameFormWithNickname(CreateGameForm):
     def __init__(self, *args, **kwargs):
         super(CreateGameFormWithNickname, self).__init__(*args, **kwargs)
         self.fields.keyOrder = ['nickname', 'categories', 'max_players',
-                                'is_private']
+                                'password']
 
 
 class NicknameForm(forms.Form):
     nickname = forms.CharField(max_length=20)
+
+
+class PasswordNicknameForm(NicknameForm):
+    password = forms.CharField()
+
+    def clean(self):
+        cleaned_data = super(PasswordNicknameForm, self).clean()
+        password = cleaned_data.get('password')
+
+        if not check_password(password, self.game_password):
+            msg = u"The password is not valid."
+            self._errors['password'] = self.error_class([msg])
+
+            del cleaned_data['password']
+
+        return cleaned_data

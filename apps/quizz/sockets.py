@@ -27,7 +27,9 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
         self.logger.info("[{0}] {1}".format(self.socket.sessid, message))
 
     def get_games_list(self):
-        games = Game.objects.filter(is_private=False)
+        games = Game.objects.filter(
+            status__in=[Game.STATUS_PLAYING, Game.STATUS_WAITING]
+        )
         return [game.to_dict() for game in games]
 
     def get_session(self):
@@ -98,8 +100,6 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
         )
         self.game.save()
 
-        answers = self.game.current_question.get_random_answers()
-
         self.emit_to_players('question', {
             'id': self.game.current_player_id,
             'name': self.game.current_player.name,
@@ -150,8 +150,6 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
         if self.game.current_level > current_level:
             self.log('sending games list due to new level')
             self.broadcast_event_not_me('games_list', self.get_games_list())
-
-        answers = self.game.current_question.get_random_answers()
 
         self.emit_to_players('question', {
             'id': self.game.current_player_id,
