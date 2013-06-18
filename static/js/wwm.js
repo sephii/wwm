@@ -20,8 +20,8 @@ Game = function() {
         else {
             socket.emit('hello');
         }
-        bindSocketFunctions();
 
+        bindSocketFunctions();
     }
 
     function bindSocketFunctions() {
@@ -37,7 +37,8 @@ Game = function() {
                     '<tr><td>' + games[i].creator + '</td><td>' + games[i].money +
                     '</td><td>' + games[i].categories.join(', ') + '</td><td>' +
                     games[i].nb_players + ' / ' + games[i].max_players +
-                    '</td><td>' + (games[i].status == 1 ? ('<a href="games/' + games[i].id + '/">Join</a>') : '') + '</td>'));
+                    '</td><td ' + (games[i].has_password ? 'class="locked"' : '') + '>' +
+                    (games[i].status == 1 ? ('<a href="games/' + games[i].id + '/">Join</a>') : '') + '</td>'));
             }
 
             $('#games-list tbody a').click(function() {

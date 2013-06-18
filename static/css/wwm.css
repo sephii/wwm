@@ -45,3 +45,10 @@ a.answer.disabled, a.answer.disabled:hover, a.answer.disabled:focus {
 #current-player.you {
     font-weight: bold;
 }
+
+.locked {
+    padding-left: 20px;
+    background-image: url('/static/images/lock.gif');
+    background-position: left center;
+    background-repeat: no-repeat;
+}

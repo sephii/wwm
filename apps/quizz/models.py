@@ -73,6 +73,7 @@ class Game(models.Model):
             'max_players': self.max_players,
             'creator': self.owner.name,
             'money': self.LEVELS_VALUES[self.current_level - 1],
+            'has_password': self.password != '',
         }
 
     def get_question(self):
