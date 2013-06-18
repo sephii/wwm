@@ -28,7 +28,7 @@
             </div>
             <div class="row">
                 <div class="small-12 large-12 columns">
-                    <a class="button" id="create-game">Create game</a>
+                    <a class="button" id="create-game" href="/#games/new">Create game</a>
                 </div>
             </div>
             <div class="row">
@@ -67,6 +67,8 @@
         <script src="{{ STATIC_URL }}js/libs/jquery-1.10.1.min.js"></script>
         <script src="{{ STATIC_URL }}js/libs/socket.io.js"></script>
         <script src="{{ STATIC_URL }}js/libs/foundation.min.js"></script>
+        <script src="{{ STATIC_URL }}js/libs/underscore.min.js"></script>
+        <script src="{{ STATIC_URL }}js/libs/backbone.min.js"></script>
         <script src="{{ STATIC_URL }}js/wwm.js"></script>
         {% block extrajs %}{% endblock %}
     </body>

@@ -174,7 +174,7 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
-        'socketio.chat': {
+        'socketio': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': True,

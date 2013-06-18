@@ -1,35 +1,28 @@
 Chat = function() {
 }();
 
-Game = function() {
+GamesList = function() {
     var socket;
 
     function connect() {
-        socket = io.connect('/quizz');
+        socket = io.connect('/games-list');
 
         $(window).bind("beforeunload", function() {
             socket.disconnect();
         });
 
-        console.log('hello');
-        if(window.session !== undefined && window.session) {
-            socket.emit('hello', window.session, function() {
-                joinGame();
-            });
-        }
-        else {
-            socket.emit('hello');
-        }
-
+        socket.emit('hello');
         bindSocketFunctions();
     }
 
     function bindSocketFunctions() {
         socket.on('connect', function (s) {
-            console.log('connected');
+            console.log('connected to games list');
         });
 
         socket.on('games_list', function (games) {
+            console.log('hellooo');
+            //console.log('received games listtt');
             $('#games-list tbody').empty();
             for (var i in games) {
                 // TODO XSS
@@ -44,6 +37,38 @@ Game = function() {
             $('#games-list tbody a').click(function() {
                 socket.emit('join', $(this).text());
             });
+        });
+    }
+
+    return {
+        'connect': connect
+    }
+}();
+
+Game = function() {
+    var socket;
+
+    function connect() {
+        socket = io.connect('/quizz');
+
+        $(window).bind("beforeunload", function() {
+            socket.disconnect();
+        });
+
+        console.log('hello');
+        if(window.session !== undefined && window.session) {
+            socket.emit('hello', window.session);
+        }
+        else {
+            socket.emit('hello');
+        }
+
+        bindSocketFunctions();
+    }
+
+    function bindSocketFunctions() {
+        socket.on('connect', function (s) {
+            console.log('connected');
         });
 
         socket.on('reconnect', function () {
@@ -64,6 +89,10 @@ Game = function() {
 
         socket.on('player_left', function(nickname) {
             console.log('player ' + nickname + ' left');
+        });
+
+        socket.on('games_list', function (games) {
+            console.log('errrrrr');
         });
 
         socket.on('players_list', function(players) {
@@ -179,38 +208,48 @@ Game = function() {
     }
 }();
 
+// $(function() {
+//     Game.connect();
+//     else if(window.session == '') {
+//         console.log('no session');
+//         $('#nickname-dialog').foundation('reveal', 'open', {
+//             animation: ''
+//         });
+//     }
+// });
+
 $(function() {
-    Game.connect();
+    var AppRouter = Backbone.Router.extend({
+        routes: {
+            '': 'home',
+            'games/new': 'newGame',
+            'games/:id': 'joinGame'
+        },
+
+        home: function() {
+            GamesList.connect();
+        },
+
+        newGame: function() {
+            $('#create-game-dialog').foundation('reveal', 'open', {
+                closeOnBackgroundClick: true
+            });
+        },
+
+        joinGame: function(id) {
+            Game.joinGame(id);
+        }
+    });
+
+    var GamesListView = Backbone.View.extend({
+    });
+
+    app_router = new AppRouter();
+    Backbone.history.start();
 
     $('#start-game').click(function() {
-        console.log('lets get ready to rumbleeee');
         Game.startGame();
-
         return false;
     });
 
-    $('#create-game').click(function() {
-        $('#create-game-dialog').foundation('reveal', 'open', {
-            closeOnBackgroundClick: true
-        });
-    });
-
-    if($('#create-game-dialog form').hasClass('errors')) {
-        $('#create-game-dialog').foundation('reveal', 'open', {
-            animation: ''
-        });
-    }
-
-    if($('#nickname-dialog form').hasClass('errors')) {
-        $('#nickname-dialog').foundation('reveal', 'open', {
-            animation: ''
-        });
-    }
-
-    else if(window.session == '') {
-        console.log('no session');
-        $('#nickname-dialog').foundation('reveal', 'open', {
-            animation: ''
-        });
-    }
 });

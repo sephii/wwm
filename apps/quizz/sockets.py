@@ -10,6 +10,9 @@ from .mixins import GameMixin
 from .models import Game, Player
 
 
+logger = logging.getLogger('socketio')
+
+
 @namespace('/quizz')
 class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
     def __init__(self, *args, **kwargs):
@@ -54,8 +57,15 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
 
         self.emit('games_list', self.get_games_list())
 
+        return True
+
     def on_create_game(self):
-        self.broadcast_event_not_me('games_list', self.get_games_list())
+        #self.broadcast_event_endpoint('games_list', '/games-list',
+        #                              self.get_games_list())
+        self.log('ON CREATE')
+        self.broadcast_event('games_list', self.get_games_list())
+
+        return True
 
     def on_join_game(self):
         player_id = self.get_session().get_decoded()['player_id']
@@ -182,3 +192,36 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
 
     def get_initial_acl(self):
         return ['on_hello', 'recv_connect', 'recv_disconnect']
+
+    def broadcast_event_endpoint(self, event, endpoint, *args):
+        """
+        This is sent to all in the sockets in this particular Namespace,
+        including itself.
+        """
+        pkt = dict(type="event",
+                   name=event,
+                   args=args,
+                   endpoint=self.ns_name)
+
+        #import pdb; pdb.set_trace();
+        for sessid, socket in self.socket.server.sockets.iteritems():
+            try:
+                #socket[endpoint].socket.send_packet(pkt)
+                socket.send_packet(pkt)
+                logger.info('sending broadcast event to endpoint ' + endpoint + ' to socket ' + str(socket))
+            except KeyError:
+                pass
+
+
+@namespace('/games-list')
+class GamesListNamespace(BaseNamespace, BroadcastMixin):
+    def on_hello(self):
+        logger.info(str(self.socket))
+        logger.info('received hello on games list')
+        self.emit('games_list', self.get_games_list())
+
+    def get_games_list(self):
+        games = Game.objects.filter(
+            status__in=[Game.STATUS_PLAYING, Game.STATUS_WAITING]
+        )
+        return [game.to_dict() for game in games]
