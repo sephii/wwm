@@ -13,27 +13,56 @@
     <body>
         <div id="container">
             {% block body %}
-            <div id="create-game-dialog" class="medium reveal-modal">
-                <h3>{% trans "Create new game" %}</h3>
-                <form method="post" action="{% url 'home' %}" {% if create_game_form.errors %}class="errors"{% endif %}>
-                    {% csrf_token %}
-                    {% include "form.html" with form=create_game_form %}
-                    <div class="row">
-                        <div class="large-12 small-12 columns">
-                            <input type="submit" class="button" value="Create game"/>
+            <div id="create-game-container">
+                <div id="create-game-dialog" class="medium reveal-modal">
+                    <h3>{% trans "Create new game" %}</h3>
+                    <form method="post" action="">
+                        <div class="form">
+                        {% csrf_token %}
+                        {% include "form.html" with form=create_game_form %}
                         </div>
+                        <div class="row">
+                            <div class="large-12 small-12 columns">
+                                <input type="submit" class="button" id="create-game" value="Create game"/>
+                            </div>
+                        </div>
+                        </select>
+                    </form>
+                </div>
+                <div class="row">
+                    <div class="small-12 large-12 columns">
+                        <a class="button" href="/#games/new">Create game</a>
                     </div>
-                    </select>
-                </form>
-            </div>
-            <div class="row">
-                <div class="small-12 large-12 columns">
-                    <a class="button" id="create-game" href="/#games/new">Create game</a>
                 </div>
             </div>
+            <div id="games-list">
+            </div>
+            <div id="game-waitingroom">
+            </div>
+            <div id="game-container">
+                <div id="nickname-dialog" class="medium reveal-modal">
+                    <h3>{% trans "Game information" %}</h3>
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        {% include "form.html" with form=nickname_form %}
+                        <div class="row">
+                            <div class="large-12 small-12 columns">
+                                <input type="submit" class="button" value="Join game"/>
+                            </div>
+                        </div>
+                        </select>
+                    </form>
+                </div>
+                <div id="game-board">
+                </div>
+            </div>
+            {% endblock %}
+        </div>
+
+        <script type="text/html" id="games-list-template">
             <div class="row">
                 <div class="small-12 large-12 columns">
-                    <table id="games-list">
+                    <table>
                         <thead>
                             <tr>
                                 <th>Creator</th>
@@ -44,32 +73,81 @@
                             </tr>
                         </thead>
                         <tbody>
+                        <% _.each(games, function(game) { %>
+                            <tr>
+                                <td><%= game.creator %></td>
+                                <td><%= game.money %></td>
+                                <td><%= game.categories %></td>
+                                <td><%= game.nb_players %> / <%= game.max_players %></td>
+                                <% if(game.status == 1) { %>
+                                    <td <% if(game.has_password) { %>class="locked"<% } %>>Join</td>
+                                <% } else { %>
+                                    <td></td>
+                                <% } %>
+                            </tr>
+                        <% }); %>
                         </tbody>
                     </table>
                 </div>
             </div>
-            {% comment %}
+        </script>
+
+        <script type="text/html" id="game-template">
             <div class="row">
-                <div class="twelve columns">
-                    <form id="connect" method="post" action="">
-                        {% csrf_token %}
-                        <input id="nickname" type="text" name="nickname"/>
-                        <input type="submit" class="button"/>
-                    </form>
-                    <ul id="games">
-                    </ul>
-                    <a id="start">Start</a>
+                <div class="large-6 small-6 columns">
+                    Current player is <%= current_player %>
+                </div>
+                <div class="large-6 small-6 columns">
+                    <img src="{{ STATIC_URL }}images/gold.png"/>
+                    <%= current_money %>
                 </div>
             </div>
-            {% endcomment %}
-            {% endblock %}
-        </div>
+            <div class="row">
+                <div class="large-12 small-12 columns question-container">
+                    <div class="panel"><%= current_question %></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="large-12 small-12 columns">
+                    <ol class="large-block-grid-2 small-block-grid-1" id="answers">
+                    </ol>
+                </div>
+            </div>
+        </script>
+
+        <script type="text/html" id="game-waitingroom-template">
+            <a id="start-game" href="" class="button">Start game</a>
+
+            <ul id="players-list">
+                <% _.each(players, function(player) { %>
+                    <li><%= player.name %></li>
+                <% }); %>
+            </ul>
+        </script>
+
+        <script type="text/javascript">
+            window.session = '{{ request.session.session_key|default:'' }}';
+        </script>
+
         <script src="{{ STATIC_URL }}js/libs/jquery-1.10.1.min.js"></script>
+        <script src="{{ STATIC_URL }}js/libs/jquery.cookie.js"></script>
         <script src="{{ STATIC_URL }}js/libs/socket.io.js"></script>
         <script src="{{ STATIC_URL }}js/libs/foundation.min.js"></script>
         <script src="{{ STATIC_URL }}js/libs/underscore.min.js"></script>
         <script src="{{ STATIC_URL }}js/libs/backbone.min.js"></script>
-        <script src="{{ STATIC_URL }}js/wwm.js"></script>
+
+        <script src="{{ STATIC_URL }}js/app.js"></script>
+        <script src="{{ STATIC_URL }}js/sockets.js"></script>
+        <script src="{{ STATIC_URL }}js/models/game.js"></script>
+        <script src="{{ STATIC_URL }}js/models/player.js"></script>
+        <script src="{{ STATIC_URL }}js/collections/games.js"></script>
+        <script src="{{ STATIC_URL }}js/collections/players.js"></script>
+        <script src="{{ STATIC_URL }}js/views/socketioview.js"></script>
+        <script src="{{ STATIC_URL }}js/views/gameview.js"></script>
+        <script src="{{ STATIC_URL }}js/views/gamesview.js"></script>
+        <script src="{{ STATIC_URL }}js/views/gamewaitingroomview.js"></script>
+        <script src="{{ STATIC_URL }}js/views/creategameview.js"></script>
+
         {% block extrajs %}{% endblock %}
     </body>
 </html>

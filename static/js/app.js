@@ -1,3 +1,18 @@
+var csrftoken = $.cookie('csrftoken');
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    crossDomain: false, // obviates need for sameOrigin test
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type)) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
+
+/*
 Chat = function() {
 }();
 
@@ -11,8 +26,8 @@ GamesList = function() {
             socket.disconnect();
         });
 
-        socket.emit('hello');
         bindSocketFunctions();
+        socket.emit('hello');
     }
 
     function bindSocketFunctions() {
@@ -21,8 +36,6 @@ GamesList = function() {
         });
 
         socket.on('games_list', function (games) {
-            console.log('hellooo');
-            //console.log('received games listtt');
             $('#games-list tbody').empty();
             for (var i in games) {
                 // TODO XSS
@@ -207,49 +220,66 @@ Game = function() {
         'announceGame': announceGame
     }
 }();
+*/
 
-// $(function() {
-//     Game.connect();
-//     else if(window.session == '') {
-//         console.log('no session');
-//         $('#nickname-dialog').foundation('reveal', 'open', {
-//             animation: ''
-//         });
-//     }
-// });
+window.App = {
+    gamesView: null,
+    createGameView: null,
+    sockets: {},
+    getSocket: function(socket) {
+        if(!this.sockets[socket].isInitialized()) {
+            this.sockets[socket].initialize();
+        }
+
+        return this.sockets[socket];
+    },
+    sessionId: window.session == undefined ? null : window.session
+}
+
+App.Router = Backbone.Router.extend({
+    routes: {
+        '': 'home',
+        'games/new': 'newGame',
+        'games/:id': 'joinGame'
+    },
+
+    home: function() {
+        App.gamesView = new App.GamesView();
+        App.gamesView.render();
+    },
+
+    newGame: function() {
+        if(App.gamesView == null) {
+            App.gamesView = new App.GamesView();
+            App.gamesView.render();
+        }
+
+        App.createGameView = new App.CreateGameView();
+        App.createGameView.render();
+    },
+
+    joinGame: function(id) {
+        if(App.createGameView != null) {
+            App.createGameView.hide();
+        }
+
+        if(App.gamesView != null) {
+            App.gamesView.hide();
+        }
+
+        App.gameWaitingRoomView = new App.GameWaitingRoomView({
+            'gameId': id
+        });
+        App.gameWaitingRoomView.render();
+    }
+});
 
 $(function() {
-    var AppRouter = Backbone.Router.extend({
-        routes: {
-            '': 'home',
-            'games/new': 'newGame',
-            'games/:id': 'joinGame'
-        },
+    App.router = new App.Router();
+    App.sockets = {
+        gamesList: new App.GamesListSocket(),
+        game: new App.GameSocket()
+    };
 
-        home: function() {
-            GamesList.connect();
-        },
-
-        newGame: function() {
-            $('#create-game-dialog').foundation('reveal', 'open', {
-                closeOnBackgroundClick: true
-            });
-        },
-
-        joinGame: function(id) {
-            Game.joinGame(id);
-        }
-    });
-
-    var GamesListView = Backbone.View.extend({
-    });
-
-    app_router = new AppRouter();
     Backbone.history.start();
-
-    $('#start-game').click(function() {
-        Game.startGame();
-        return false;
-    });
-
 });

@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.hashers import check_password
+from django.template.loader import render_to_string
 from .models import Category
 
 
@@ -38,3 +39,7 @@ class PasswordNicknameForm(NicknameForm):
             del cleaned_data['password']
 
         return cleaned_data
+
+
+def render_form(form):
+    return render_to_string('form.html', {'form': form})

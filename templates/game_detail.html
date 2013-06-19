@@ -11,55 +11,8 @@
 {% endblock %}
 
 {% block body %}
-    <div id="nickname-dialog" class="medium reveal-modal">
-        <h3>{% trans "Game information" %}</h3>
-        <form method="post" action="{% url 'game_detail' game.id %}" {% if nickname_form.errors %}class="errors"{% endif %}>
-            {% csrf_token %}
-            {% include "form.html" with form=nickname_form %}
-            <div class="row">
-                <div class="large-12 small-12 columns">
-                    <input type="submit" class="button" value="Join game"/>
-                </div>
-            </div>
-            </select>
-        </form>
-    </div>
-
-    <div id="game-board">
-        <div class="row">
-            <div class="large-6 small-6 columns" id="current-player-container">
-                Current player is <span id="current-player"></span>
-            </div>
-            <div class="large-6 small-6 columns" id="current-money-container">
-                <img src="{{ STATIC_URL }}images/gold.png"/>
-                <span id="current-money">100</span>
-            </div>
-        </div>
-        <div class="row">
-            <div class="large-12 small-12 columns question-container">
-                <div class="panel" id="question"></div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="large-12 small-12 columns">
-                <ol class="large-block-grid-2 small-block-grid-1" id="answers"></ol>
-            </div>
-        </div>
-    </div>
-
-    <div id="waiting-screen">
-        {% if player and game.owner_id == player.id %}
-        <a id="start-game" href="" class="button">Start game</a>
-        {% endif %}
-
-        <ul id="players-list">
-        {% for player in game.players.all %}
-            <li>{{ player.name }}</li>
-        {% endfor %}
-        </ul>
-    </div>
 {% endblock %}
 
 {% block extrajs %}
-    <script type="text/javascript">$(function () { Game.announceGame(); })</script>
+    <script type="text/javascript">//$(function () { Game.announceGame(); })</script>
 {% endblock %}

@@ -1,13 +1,15 @@
+import json
 import random
 
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.template import RequestContext
 from django.shortcuts import get_object_or_404, render_to_response, redirect
 from .forms import (
     CreateGameForm, CreateGameFormWithNickname, NicknameForm,
-    PasswordNicknameForm
+    PasswordNicknameForm, render_form
 )
 from .models import Game, Category, Player
 from .sockets import QuizzNamespace
@@ -21,6 +23,12 @@ RANDOM_NAMES = [
     'Aerys', 'Daenerys', 'Loras', 'Edmure', 'Rickon', 'Jaime', 'Sansa', 'Arya',
     'Davos', 'Tyrion'
 ]
+
+
+def render_to_json_response(context, **response_kwargs):
+    data = json.dumps(context)
+    response_kwargs['content_type'] = 'application/json'
+    return HttpResponse(data, **response_kwargs)
 
 
 def home(request):
@@ -74,6 +82,50 @@ def home(request):
         'categories': Category.objects.all(),
         'create_game_form': game_form,
     }, RequestContext(request))
+
+
+def game_create(request):
+    player_id = request.session.get('player_id', None)
+
+    if (player_id is not None
+            and Player.objects.filter(pk=player_id).count() > 0):
+        form_class = CreateGameForm
+        player = Player.objects.get(pk=player_id)
+    else:
+        form_class = CreateGameFormWithNickname
+        player = None
+
+    game_form = form_class(request.POST)
+
+    if game_form.is_valid():
+        if player is None:
+            player = Player.objects.create(
+                name=game_form.cleaned_data['nickname']
+            )
+            request.session['player_id'] = player.id
+
+        game = Game.objects.create(
+            max_players=game_form.cleaned_data['max_players'],
+            owner=player,
+        )
+
+        if game_form.cleaned_data['password']:
+            game.password = make_password(
+                game_form.cleaned_data['password']
+            )
+            game.save()
+
+        for category in game_form.cleaned_data['categories']:
+            game.categories.add(category)
+
+        player.game = game
+        player.save()
+
+        return render_to_json_response({'pk': game.pk})
+
+    return render_to_json_response({
+        'form': render_form(game_form)
+    }, status=400)
 
 
 def game_detail(request, id):
