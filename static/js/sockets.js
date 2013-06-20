@@ -27,7 +27,10 @@ App.BaseSocket = {
 
         $(window).bind('beforeunload', function() {
             console.log('before unload');
-            this.socket.disconnect();
+
+            if(!_.isUndefined(this.socket)) {
+                this.socket.disconnect();
+            }
         });
     },
 
@@ -57,7 +60,7 @@ App.BaseSocket = {
         }
 
         if(this.hasHelloAck) {
-            fun(options);
+            fun(this.socket, options);
         }
         else {
             this.queue.push({'callback': fun, 'options': options});
@@ -94,7 +97,16 @@ _.extend(App.GameSocket.prototype, App.BaseSocket, {
         this.emit(this.doJoinGame, {'gameId': gameId});
     },
 
+    setNickname: function(nickname, callback) {
+        this.emit(this.doSetNickname, {'nickname': nickname, 'callback': callback});
+    },
+
+    doSetNickname: function(socket, options) {
+        socket.emit('set_nickname', options.nickname, options.callback);
+    },
+
     doJoinGame: function(socket, options) {
+        console.log(options);
         console.log('sending join game packet');
         socket.emit('join_game', options.gameId);
     },

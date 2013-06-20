@@ -16,6 +16,8 @@ App.CreateGameView = App.SocketIoView.extend({
     },
 
     createGame: function(e) {
+        e.preventDefault();
+
         $.ajax({
             type: 'POST',
             url: '/games/new/',
@@ -24,12 +26,11 @@ App.CreateGameView = App.SocketIoView.extend({
                 $('#create-game-dialog div.form').html(xhr.responseJSON.form);
             },
             success: function(data) {
+                App.sessionId = data.sessionId;
                 App.getSocket('game').createGame();
                 App.router.navigate('games/' + data.pk, {trigger: true});
             }
         });
-
-        e.preventDefault();
     },
 
     render: function() {

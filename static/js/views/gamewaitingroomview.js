@@ -4,12 +4,13 @@
  */
 App.GameWaitingRoomView = App.SocketIoView.extend({
     events: {
-        'click #start-game': 'start'
+        'click #start-game': 'start',
+        'click #join-game': 'joinGame'
     },
 
     socket_events: {
         'game': {
-            'connect': 'joinGame',
+            //'connect': 'joinGame',
             'players_list': 'updatePlayersList',
             'player_joined': 'playerJoined'
         }
@@ -30,12 +31,30 @@ App.GameWaitingRoomView = App.SocketIoView.extend({
             'players': this.model.toJSON()
         }));
 
+        if(App.playerId == null) {
+            $('#nickname-dialog').foundation('reveal', 'open', {
+                closeOnBackgroundClick: true
+            });
+        }
+
         return this;
     },
 
-    joinGame: function() {
+    joinGame: function(e) {
+        var gameId = this.options.gameId;
+        e.preventDefault();
         console.log('join game');
-        App.getSocket('game').joinGame(this.options.gameId);
+        console.log($('#nickname-dialog input[name="nickname"]').val());
+
+        App.getSocket('game').setNickname(
+            $('#nickname-dialog input[name="nickname"]').val(),
+            function(response) {
+                App.getSocket('game').joinGame(
+                    gameId,
+                    $('#nickname-dialog input[name="password"]').val()
+                );
+            }
+        );
     },
 
     updatePlayersList: function(playersList) {

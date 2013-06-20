@@ -225,7 +225,9 @@ Game = function() {
 window.App = {
     gamesView: null,
     createGameView: null,
+    playerId: null,
     sockets: {},
+    sessionId: _.isUndefined(window.sessionId) ? null : window.sessionId,
     getSocket: function(socket) {
         if(!this.sockets[socket].isInitialized()) {
             this.sockets[socket].initialize();
@@ -233,7 +235,6 @@ window.App = {
 
         return this.sockets[socket];
     },
-    sessionId: window.session == undefined ? null : window.session
 }
 
 App.Router = Backbone.Router.extend({

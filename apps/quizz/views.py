@@ -39,48 +39,22 @@ def home(request):
         form_class = CreateGameForm
         player = Player.objects.get(pk=player_id)
     else:
+        # Initialize session
+        request.session['player_id'] = None
         form_class = CreateGameFormWithNickname
         player = None
 
-    if request.method == 'POST':
-        game_form = form_class(request.POST)
+    game_form = form_class(initial={
+        'nickname': random.choice(RANDOM_NAMES),
+        'categories': [Category.objects.all()[0]],
+    })
 
-        if game_form.is_valid():
-            if player is None:
-                player = Player.objects.create(
-                    name=game_form.cleaned_data['nickname']
-                )
-                request.session['player_id'] = player.id
-
-            game = Game.objects.create(
-                max_players=game_form.cleaned_data['max_players'],
-                owner=player,
-            )
-
-            if game_form.cleaned_data['password']:
-                game.password = make_password(
-                    game_form.cleaned_data['password']
-                )
-                game.save()
-
-            for category in game_form.cleaned_data['categories']:
-                game.categories.add(category)
-
-            player.game = game
-            player.save()
-
-            url_parameters = {'id': game.id}
-
-            return redirect(reverse('game_detail', kwargs=url_parameters))
-    else:
-        game_form = form_class(initial={
-            'nickname': random.choice(RANDOM_NAMES),
-            'categories': [Category.objects.all()[0]],
-        })
+    nickname_form = PasswordNicknameForm()
 
     return render_to_response('base.html', {
         'categories': Category.objects.all(),
         'create_game_form': game_form,
+        'nickname_form': nickname_form,
     }, RequestContext(request))
 
 
@@ -121,7 +95,9 @@ def game_create(request):
         player.game = game
         player.save()
 
-        return render_to_json_response({'pk': game.pk})
+        return render_to_json_response({
+            'pk': game.pk,
+        })
 
     return render_to_json_response({
         'form': render_form(game_form)

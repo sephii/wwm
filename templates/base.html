@@ -40,19 +40,6 @@
             <div id="game-waitingroom">
             </div>
             <div id="game-container">
-                <div id="nickname-dialog" class="medium reveal-modal">
-                    <h3>{% trans "Game information" %}</h3>
-                    <form method="post" action="">
-                        {% csrf_token %}
-                        {% include "form.html" with form=nickname_form %}
-                        <div class="row">
-                            <div class="large-12 small-12 columns">
-                                <input type="submit" class="button" value="Join game"/>
-                            </div>
-                        </div>
-                        </select>
-                    </form>
-                </div>
                 <div id="game-board">
                 </div>
             </div>
@@ -116,6 +103,19 @@
         </script>
 
         <script type="text/html" id="game-waitingroom-template">
+            <div id="nickname-dialog" class="medium reveal-modal">
+                <h3>{% trans "Game information" %}</h3>
+                <form method="post" action="">
+                    {% csrf_token %}
+                    {% include "form.html" with form=nickname_form %}
+                    <div class="row">
+                        <div class="large-12 small-12 columns">
+                            <input type="submit" class="button" id="join-game" value="Join game"/>
+                        </div>
+                    </div>
+                    </select>
+                </form>
+            </div>
             <a id="start-game" href="" class="button">Start game</a>
 
             <ul id="players-list">
@@ -126,7 +126,7 @@
         </script>
 
         <script type="text/javascript">
-            window.session = '{{ request.session.session_key|default:'' }}';
+            window.sessionId = '{{ request.session.session_key|default:'' }}';
         </script>
 
         <script src="{{ STATIC_URL }}js/libs/jquery-1.10.1.min.js"></script>

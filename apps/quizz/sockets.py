@@ -1,6 +1,7 @@
 import gevent
 import logging
 
+from django.contrib.auth.hashers import check_password
 from django.contrib.sessions.models import Session
 from socketio.namespace import BaseNamespace
 from socketio.mixins import BroadcastMixin
@@ -53,6 +54,7 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
         self.add_acl_method('on_join_game')
         # Not sure why but we need to repeat this
         self.add_acl_method('recv_disconnect')
+        self.add_acl_method('on_set_nickname')
 
         self.log('got hellooo from ' + str(self.socket.active_ns))
 
@@ -68,7 +70,24 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
 
         return True
 
-    def on_join_game(self, game_id):
+    def on_set_nickname(self, nickname):
+        if self.player is None:
+            self.log('creating new player ' + nickname)
+            self.player = Player.objects.create(name=nickname)
+            self.get_session().player_id = self.player.id
+        else:
+            self.player.name = nickname
+            self.player.save()
+
+        return True, self.player.id
+
+    def on_join_game(self, game_id, password=None):
+        game = Game.objects.get(pk=game_id)
+
+        if game.password and (password is None or
+                not check_password(game.password, password)):
+            return False, 'Invalid password'
+
         player_id = self.get_session().get_decoded()['player_id']
         self.player = Player.objects.get(pk=player_id)
         self.player.game = Game.objects.get(pk=game_id)
@@ -183,6 +202,10 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
     def recv_disconnect(self):
         user_is_still_here = False
         self.log('received disconnect from ' + str(self.socket.active_ns))
+
+        if 'id' not in self.session:
+            self.disconnect(silent=True)
+            return True
 
         gevent.sleep(10)
 
