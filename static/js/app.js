@@ -272,6 +272,15 @@ App.Router = Backbone.Router.extend({
             'gameId': id
         });
         App.gameWaitingRoomView.render();
+
+        if(App.playerId == null) {
+            $('#nickname-dialog').foundation('reveal', 'open', {
+                closeOnBackgroundClick: true
+            });
+        }
+        else {
+            App.getSocket('game').joinGame(this.options.gameId);
+        }
     }
 });
 

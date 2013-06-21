@@ -23,6 +23,17 @@ App.GameWaitingRoomView = App.SocketIoView.extend({
         this.model = new App.Players();
         this.model.on('reset', this.render, this);
 
+        player.on('change:name', function() {
+            App.getSocket('game').setNickname(
+                player.getName(),
+                function(response) {
+                    this.joinGame(player);
+                }
+            );
+        }, this);
+
+        this.joinGame(player);
+
         this.__initialize();
     },
 
@@ -32,33 +43,18 @@ App.GameWaitingRoomView = App.SocketIoView.extend({
         }));
 
         console.log('render');
-        if(App.playerId == null) {
-            $('#nickname-dialog').foundation('reveal', 'open', {
-                closeOnBackgroundClick: true
-            });
-        }
-        else {
-            App.getSocket('game').joinGame(this.options.gameId);
-        }
-
         return this;
     },
 
-    joinGame: function(e) {
+    joinGame: function(player) {
         var gameId = this.options.gameId;
-        e.preventDefault();
-        console.log('join game');
-        console.log($('#nickname-dialog input[name="nickname"]').val());
 
-        App.getSocket('game').setNickname(
-            $('#nickname-dialog input[name="nickname"]').val(),
-            function(response) {
-                App.getSocket('game').joinGame(
-                    gameId,
-                    $('#nickname-dialog input[name="password"]').val()
-                );
-            }
-        );
+        if(!_.isNull(player.get('name'))) {
+            App.getSocket('game').joinGame(
+                gameId,
+                player.get('name')
+            );
+        }
     },
 
     updatePlayersList: function(playersList) {
