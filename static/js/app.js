@@ -225,7 +225,7 @@ Game = function() {
 window.App = {
     gamesView: null,
     createGameView: null,
-    playerId: null,
+    playerId: _.isUndefined(window.playerId) ? null : window.playerId,
     sockets: {},
     sessionId: _.isUndefined(window.sessionId) ? null : window.sessionId,
     getSocket: function(socket) {

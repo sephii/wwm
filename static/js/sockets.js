@@ -116,9 +116,12 @@ _.extend(App.GameSocket.prototype, App.BaseSocket, {
         _.bindAll(this, 'onHelloAck');
 
         if(App.sessionId) {
+            console.log('has a session id');
             this.socket.emit('hello', App.sessionId, this.onHelloAck);
         }
         else {
+            console.log(App);
+            console.log('no session id');
             this.socket.emit('hello', this.onHelloAck);
         }
     },

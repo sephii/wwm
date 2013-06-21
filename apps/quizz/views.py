@@ -55,6 +55,7 @@ def home(request):
         'categories': Category.objects.all(),
         'create_game_form': game_form,
         'nickname_form': nickname_form,
+        'player_id': player_id,
     }, RequestContext(request))
 
 

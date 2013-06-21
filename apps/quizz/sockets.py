@@ -82,6 +82,7 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
         return True, self.player.id
 
     def on_join_game(self, game_id, password=None):
+        self.log('got join game')
         game = Game.objects.get(pk=game_id)
 
         if game.password and (password is None or

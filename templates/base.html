@@ -127,6 +127,9 @@
 
         <script type="text/javascript">
             window.sessionId = '{{ request.session.session_key|default:'' }}';
+            {% if player_id %}
+            window.playerId = '{{ player_id }}';
+            {% endif %}
         </script>
 
         <script src="{{ STATIC_URL }}js/libs/jquery-1.10.1.min.js"></script>

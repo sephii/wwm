@@ -26,8 +26,9 @@ App.CreateGameView = App.SocketIoView.extend({
                 $('#create-game-dialog div.form').html(xhr.responseJSON.form);
             },
             success: function(data) {
-                App.sessionId = data.sessionId;
+                console.log(data);
                 App.getSocket('game').createGame();
+                App.getSocket('game').joinGame(data.pk);
                 App.router.navigate('games/' + data.pk, {trigger: true});
             }
         });

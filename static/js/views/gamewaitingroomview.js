@@ -31,10 +31,14 @@ App.GameWaitingRoomView = App.SocketIoView.extend({
             'players': this.model.toJSON()
         }));
 
+        console.log('render');
         if(App.playerId == null) {
             $('#nickname-dialog').foundation('reveal', 'open', {
                 closeOnBackgroundClick: true
             });
+        }
+        else {
+            App.getSocket('game').joinGame(this.options.gameId);
         }
 
         return this;
