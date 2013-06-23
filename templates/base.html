@@ -13,6 +13,18 @@
     <body>
         <div id="container">
             {% block body %}
+            <div id="games-list">
+            </div>
+            <div id="game-waitingroom">
+            </div>
+            <div id="game-container">
+                <div id="game-board">
+                </div>
+            </div>
+            {% endblock %}
+        </div>
+
+        <script type="text/html" id="games-list-template">
             <div id="create-game-container">
                 <div id="create-game-dialog" class="medium reveal-modal">
                     <h3>{% trans "Create new game" %}</h3>
@@ -35,18 +47,6 @@
                     </div>
                 </div>
             </div>
-            <div id="games-list">
-            </div>
-            <div id="game-waitingroom">
-            </div>
-            <div id="game-container">
-                <div id="game-board">
-                </div>
-            </div>
-            {% endblock %}
-        </div>
-
-        <script type="text/html" id="games-list-template">
             <div class="row">
                 <div class="small-12 large-12 columns">
                     <table>
@@ -67,7 +67,7 @@
                                 <td><%= game.categories %></td>
                                 <td><%= game.nb_players %> / <%= game.max_players %></td>
                                 <% if(game.status == 1) { %>
-                                    <td <% if(game.has_password) { %>class="locked"<% } %>>Join</td>
+                                    <td <% if(game.has_password) { %>class="locked"<% } %>><a href="#/games/<%= game.id %>">Join</a></td>
                                 <% } else { %>
                                     <td></td>
                                 <% } %>

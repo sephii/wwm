@@ -10,6 +10,8 @@ urlpatterns = patterns(
     url("^socket\.io", include(socketio.sdjango.urls)),
     url(r'^$', 'apps.quizz.views.home', name='home'),
     url(r'^games/new/$', 'apps.quizz.views.game_create', name='game_create'),
+    url(r'^games/(?P<id>\d+)/info/$', 'apps.quizz.views.game_info',
+        name='game_info'),
     #url(r'^games/(?P<id>\d+)/$', 'apps.quizz.views.game_detail',
     #    name='game_detail'),
     # url(r'^wwm/', include('wwm.foo.urls')),

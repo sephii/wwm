@@ -2,7 +2,7 @@ import gevent
 import logging
 
 from django.contrib.auth.hashers import check_password
-from django.contrib.sessions.models import Session
+from django.contrib.sessions.backends.db import SessionStore
 from socketio.namespace import BaseNamespace
 from socketio.mixins import BroadcastMixin
 from socketio.sdjango import namespace
@@ -38,7 +38,7 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
 
     def get_session(self):
         self.log(self.session)
-        return Session.objects.get(pk=self.session['id'])
+        return SessionStore(session_key=self.session['id'])
 
     def get_game(self):
         return Game.objects.get(pk=self.game.id)
@@ -74,8 +74,12 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
         if self.player is None:
             self.log('creating new player ' + nickname)
             self.player = Player.objects.create(name=nickname)
-            self.get_session().player_id = self.player.id
+            self.log('new player id is %s' % self.player.id)
+            session = self.get_session()
+            session['player_id'] = self.player.id
+            session.save()
         else:
+            self.log('setting nickname of player ' + self.player.id)
             self.player.name = nickname
             self.player.save()
 
@@ -87,9 +91,11 @@ class QuizzNamespace(BaseNamespace, GameMixin, BroadcastMixin):
 
         if game.password and (password is None or
                 not check_password(game.password, password)):
+            self.log('invalid password')
             return False, 'Invalid password'
 
-        player_id = self.get_session().get_decoded()['player_id']
+        player_id = self.get_session()['player_id']
+        self.log('session player id is %s' % player_id)
         self.player = Player.objects.get(pk=player_id)
         self.player.game = Game.objects.get(pk=game_id)
         self.player.save()

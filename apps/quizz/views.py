@@ -131,8 +131,8 @@ def game_detail(request, id):
         if 'player_id' in request.session:
             player = Player.objects.get(pk=request.session['player_id'])
 
-        if (game.status != Game.STATUS_WAITING and (player is None or
-                player.game_id != game.id)):
+        if (game.status != Game.STATUS_WAITING
+                and (player is None or player.game_id != game.id)):
             raise PermissionDenied
 
         if player is not None:
@@ -153,3 +153,11 @@ def game_detail(request, id):
 #    confidence = question.difficulty * (CALL_A_FRIEND_MAX_CONFIDENCE -
 #            CALL_A_FRIEND_MIN_CONFIDENCE) / (MAX_DIFFICULTY - 1)
 #    friend_is_right = random.randrange(confidence_min, confidence_max)
+
+
+def game_info(request, id):
+    game = get_object_or_404(Game, pk=id)
+
+    return render_to_json_response({
+        'needs_password': game.password != ''
+    })

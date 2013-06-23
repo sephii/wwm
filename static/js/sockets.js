@@ -93,7 +93,7 @@ _.extend(App.GameSocket.prototype, App.BaseSocket, {
         socket.emit('create_game');
     },
 
-    joinGame: function(gameId) {
+    joinGame: function(gameId, password) {
         this.emit(this.doJoinGame, {'gameId': gameId});
     },
 
@@ -108,7 +108,7 @@ _.extend(App.GameSocket.prototype, App.BaseSocket, {
     doJoinGame: function(socket, options) {
         console.log(options);
         console.log('sending join game packet');
-        socket.emit('join_game', options.gameId);
+        socket.emit('join_game', options.gameId, options.password);
     },
 
     onConnect: function() {

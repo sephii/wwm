@@ -5,7 +5,7 @@
 App.GameWaitingRoomView = App.SocketIoView.extend({
     events: {
         'click #start-game': 'start',
-        'click #join-game': 'joinGame'
+        'click #join-game': 'joinGameClick'
     },
 
     socket_events: {
@@ -23,17 +23,6 @@ App.GameWaitingRoomView = App.SocketIoView.extend({
         this.model = new App.Players();
         this.model.on('reset', this.render, this);
 
-        player.on('change:name', function() {
-            App.getSocket('game').setNickname(
-                player.getName(),
-                function(response) {
-                    this.joinGame(player);
-                }
-            );
-        }, this);
-
-        this.joinGame(player);
-
         this.__initialize();
     },
 
@@ -46,15 +35,36 @@ App.GameWaitingRoomView = App.SocketIoView.extend({
         return this;
     },
 
-    joinGame: function(player) {
-        var gameId = this.options.gameId;
+    joinGame: function(player, gameId, password) {
+        if(_.isUndefined(password) || password == '') {
+            password = null;
+        }
 
-        if(!_.isNull(player.get('name'))) {
+        if(player.get('id')) {
             App.getSocket('game').joinGame(
                 gameId,
-                player.get('name')
+                password
             );
         }
+    },
+
+    joinGameClick: function(e) {
+        var that = this;
+        var password = this.$el.find('input[name="password"]').val();
+
+        e.preventDefault();
+
+        App.player.set('name',
+                       this.$el.find('input[name="nickname"]').val());
+        App.getSocket('game').setNickname(
+            App.player.get('name'),
+            function(response, playerId) {
+                console.log(playerId);
+                console.log('gameid is ', that.options.gameId);
+                App.player.set('id', playerId);
+                that.joinGame(App.player, that.options.gameId, password);
+            }
+        );
     },
 
     updatePlayersList: function(playersList) {

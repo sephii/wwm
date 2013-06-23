@@ -1,5 +1,6 @@
 App.Player = Backbone.Model.extend({
     attributes: {
-        'name': ''
+        'name': '',
+        'id': null
     }
 });

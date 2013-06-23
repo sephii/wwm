@@ -225,9 +225,9 @@ Game = function() {
 window.App = {
     gamesView: null,
     createGameView: null,
-    playerId: _.isUndefined(window.playerId) ? null : window.playerId,
-    sockets: {},
+    player: null,
     sessionId: _.isUndefined(window.sessionId) ? null : window.sessionId,
+    sockets: {},
     getSocket: function(socket) {
         if(!this.sockets[socket].isInitialized()) {
             this.sockets[socket].initialize();
@@ -235,6 +235,11 @@ window.App = {
 
         return this.sockets[socket];
     },
+    initialize: function() {
+        this.player = new App.Player({
+            id: _.isUndefined(window.playerId) ? null : window.playerId
+        });
+    }
 }
 
 App.Router = Backbone.Router.extend({
@@ -260,6 +265,8 @@ App.Router = Backbone.Router.extend({
     },
 
     joinGame: function(id) {
+        var needsPassword = false;
+
         if(App.createGameView != null) {
             App.createGameView.hide();
         }
@@ -271,15 +278,27 @@ App.Router = Backbone.Router.extend({
         App.gameWaitingRoomView = new App.GameWaitingRoomView({
             'gameId': id
         });
+
+        $.get('/games/' + id + '/info/', function(data) {
+            needsPassword = data.needs_password;
+
+            if(data.needs_password) {
+                App.gameWaitingRoomView.$el.find('input[name="password"]').parents('div.row').show();
+            }
+            else {
+                App.gameWaitingRoomView.$el.find('input[name="password"]').parents('div.row').hide();
+            }
+        });
+
         App.gameWaitingRoomView.render();
 
-        if(App.playerId == null) {
+        if(App.player.get('id') == null || needsPassword) {
             $('#nickname-dialog').foundation('reveal', 'open', {
                 closeOnBackgroundClick: true
             });
         }
         else {
-            App.getSocket('game').joinGame(this.options.gameId);
+            App.gameWaitingRoomView.joinGame(App.player, id);
         }
     }
 });
@@ -290,6 +309,7 @@ $(function() {
         gamesList: new App.GamesListSocket(),
         game: new App.GameSocket()
     };
+    App.initialize();
 
     Backbone.history.start();
 });
