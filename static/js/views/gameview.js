@@ -14,7 +14,7 @@ App.GameView = App.SocketIoView.extend({
 
     render: function() {
         this.$el.html(this.template({
-            'games': this.model.toJSON()
+            'game': this.model.toJSON()
         }));
         return this;
     }

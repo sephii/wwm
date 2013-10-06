@@ -240,7 +240,7 @@ window.App = {
             id: _.isUndefined(window.playerId) ? null : window.playerId
         });
     }
-}
+};
 
 App.Router = Backbone.Router.extend({
     routes: {
@@ -255,7 +255,7 @@ App.Router = Backbone.Router.extend({
     },
 
     newGame: function() {
-        if(App.gamesView == null) {
+        if(App.gamesView === null) {
             App.gamesView = new App.GamesView();
             App.gamesView.render();
         }
@@ -267,11 +267,11 @@ App.Router = Backbone.Router.extend({
     joinGame: function(id) {
         var needsPassword = false;
 
-        if(App.createGameView != null) {
+        if(App.createGameView !== null) {
             App.createGameView.hide();
         }
 
-        if(App.gamesView != null) {
+        if(App.gamesView !== null) {
             App.gamesView.hide();
         }
 
@@ -292,9 +292,9 @@ App.Router = Backbone.Router.extend({
 
         App.gameWaitingRoomView.render();
 
-        if(App.player.get('id') == null || needsPassword) {
+        if(App.player.get('id') === null || needsPassword) {
             $('#nickname-dialog').foundation('reveal', 'open', {
-                closeOnBackgroundClick: true
+                closeOnBackgroundClick: false
             });
         }
         else {

@@ -111,6 +111,15 @@ _.extend(App.GameSocket.prototype, App.BaseSocket, {
         socket.emit('join_game', options.gameId, options.password);
     },
 
+    startGame: function() {
+        this.emit(this.doStartGame);
+    },
+
+    doStartGame: function(socket, options) {
+        console.log('sending start game packet');
+        socket.emit('start_game');
+    },
+
     onConnect: function() {
         console.log('game socket connected, sending hello');
         _.bindAll(this, 'onHelloAck');

@@ -12,7 +12,8 @@ App.GameWaitingRoomView = App.SocketIoView.extend({
         'game': {
             //'connect': 'joinGame',
             'players_list': 'updatePlayersList',
-            'player_joined': 'playerJoined'
+            'player_joined': 'playerJoined',
+            'game_start': 'gameStarted'
         }
     },
 
@@ -36,7 +37,7 @@ App.GameWaitingRoomView = App.SocketIoView.extend({
     },
 
     joinGame: function(player, gameId, password) {
-        if(_.isUndefined(password) || password == '') {
+        if(_.isUndefined(password) || password === '') {
             password = null;
         }
 
@@ -45,6 +46,9 @@ App.GameWaitingRoomView = App.SocketIoView.extend({
                 gameId,
                 password
             );
+        }
+        else {
+            console.log('Cannot join game, no player id');
         }
     },
 
@@ -63,20 +67,33 @@ App.GameWaitingRoomView = App.SocketIoView.extend({
                 console.log('gameid is ', that.options.gameId);
                 App.player.set('id', playerId);
                 that.joinGame(App.player, that.options.gameId, password);
+                $('#nickname-dialog').foundation('reveal', 'close');
             }
         );
     },
 
     updatePlayersList: function(playersList) {
         console.log('got players list', playersList);
-        this.model.reset(playersList)
+        this.model.reset(playersList);
     },
 
     playerJoined: function(playerName) {
         console.log(playerName + ' joined');
     },
 
-    start: function() {
-        Game.startGame();
+    start: function(e) {
+        e.preventDefault();
+        App.getSocket('game').startGame();
+    },
+
+    gameStarted: function() {
+        console.log('got game started !');
+        App.gameWaitingRoomView.hide();
+        App.gameView = new App.GameView();
+        App.gameView.render();
+    },
+
+    hide: function() {
+        this.$el.hide();
     }
 });

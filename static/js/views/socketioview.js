@@ -24,8 +24,9 @@ App.SocketIoView = Backbone.View.extend({
                 }
 
                 method = _.bind(method, this);
+                console.log('binding ' + key + ' on ' + method);
                 currentSocket.on(key, method);
-            };
+            }
         }
     }
 });

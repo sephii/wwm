@@ -82,21 +82,24 @@
         <script type="text/html" id="game-template">
             <div class="row">
                 <div class="large-6 small-6 columns">
-                    Current player is <%= current_player %>
+                    Current player is <%= game.current_player %>
                 </div>
                 <div class="large-6 small-6 columns">
                     <img src="{{ STATIC_URL }}images/gold.png"/>
-                    <%= current_money %>
+                    <%= game.current_money %>
                 </div>
             </div>
             <div class="row">
                 <div class="large-12 small-12 columns question-container">
-                    <div class="panel"><%= current_question %></div>
+                    <div class="panel"><%= game.current_question %></div>
                 </div>
             </div>
             <div class="row">
                 <div class="large-12 small-12 columns">
                     <ol class="large-block-grid-2 small-block-grid-1" id="answers">
+                        <% _.each(game.answers, function(answer) { %>
+                        <li><%= answer %></li>
+                        <% } %>
                     </ol>
                 </div>
             </div>
